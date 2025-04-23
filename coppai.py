@@ -5,6 +5,8 @@ from tkinter import simpledialog
 import pathspec
 import sys
 import pyperclip
+import re
+import subprocess
 
 # 定数
 COPPAI_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -42,10 +44,32 @@ def load_snippet(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
         return f.read()
 
+def run_getter_script(script_name):
+    script_path = os.path.join(COPPAI_DIR, f"{script_name}.py")
+    if not os.path.isfile(script_path):
+        return ""
+    try:
+        # 実行して結果をクリップボードにコピーするスクリプトなので、実行だけ行う
+        subprocess.run([sys.executable, script_path], check=True)
+        # 実行後のクリップボード内容を取得
+        return pyperclip.paste()
+    except Exception as e:
+        return ""
+
 def expand_variables(text):
-    # 現状は %cb% のみ対応
+    def replace_getter(match):
+        var_name = match.group(1)
+        result = run_getter_script(var_name)
+        return result
+
+    # まずは cb 変数から処理する
+    # これにより cb 変数と getter 変数が混在できる
     cb_content = pyperclip.paste()
-    return text.replace('%cb%', cb_content)
+    text = text.replace('%cb%', cb_content)
+
+    text = re.sub(r'%getter_([a-zA-Z0-9_]+)%', replace_getter, text)
+
+    return text
 
 def show_popup_menu(snippets):
     root = tk.Tk()
