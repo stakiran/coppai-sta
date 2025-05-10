@@ -1,12 +1,12 @@
 import os
 import glob
 import tkinter as tk
-from tkinter import simpledialog
 import pathspec
 import sys
 import pyperclip
 import re
 import subprocess
+import platform
 
 # 定数
 COPPAI_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -92,6 +92,16 @@ def show_popup_menu(snippets):
             on_select()
         elif event.keysym == 'Escape':
             root.destroy()
+        elif event.keysym == 'f':
+            path = COPPAI_DIR
+            # Macでは試してないので動くかわからん
+            if platform.system() == 'Windows':
+                subprocess.Popen(['explorer', path])
+            elif platform.system() == 'Darwin':
+                subprocess.Popen(['open', path])
+            else:
+                subprocess.Popen(['xdg-open', path])
+            return "break"
         elif event.keysym == 'Up':
             current = listbox.curselection()
             if current:
@@ -124,7 +134,6 @@ def show_popup_menu(snippets):
                     listbox.activate(index + 1)
                     listbox.see(index + 1)
                 else:
-                    # 末尾でdownしたら先頭にジャンプ
                     listbox.selection_clear(0, tk.END)
                     listbox.selection_set(0)
                     listbox.activate(0)
